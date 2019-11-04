@@ -18,28 +18,30 @@ fn main(){
 	let receiver = Arc::new(Mutex::new(rx));
 	let numrecvs: u32 = 3;
 	let mut threads = Vec::with_capacity(numrecvs as usize);
-	for i in 0..numrecvs{
+	for i in (0 as usize)..(numrecvs as usize){
 		let rec = receiver.clone();
 		threads.push(
-			thread::spawn(move || {
-				loop {
-						{
-							let val = rec.lock().unwrap().recv_timeout(Duration::from_millis(5000));
-							match val {
-								Ok(value) => println!("Argument Received {} by {}", value, i),
-								_ => {
-									println!("Timeout Reached {}", i);
-									break;
-								}
-							}
-							thread::sleep(Duration::from_millis(1000));
-						}
-				}
-			})
-		);
+			thread::spawn(move ||{handler(rec, i)})
+		)
 	}
 	for i in threads{
 		i.join().expect(&format!("Thread failed to join")[..]);
 	}
 
+}
+
+fn handler(rec: Arc<Mutex<Receiver<String>>>, i: usize){
+	loop {
+			{
+				let val = rec.lock().unwrap().recv_timeout(Duration::from_millis(5000));
+				match val {
+					Ok(value) => println!("Argument Received {} by {}", value, i),
+					_ => {
+						println!("Timeout Reached {}", i);
+						break;
+					}
+				}
+				thread::sleep(Duration::from_millis(1000));
+			}
+	}
 }
